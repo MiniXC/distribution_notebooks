@@ -6,6 +6,7 @@ import torchaudio.functional as F
 from tqdm.contrib.concurrent import process_map
 from tqdm.auto import tqdm
 import torch
+import random
 import pickle
 
 wav2mel = torch.jit.load("models/wav2mel.pt").eval()
@@ -66,7 +67,8 @@ def compute_measure(synth_wav):
         result["speaker"] = speaker
 
         return result
-    except RuntimeError:
+    except (RuntimeError, IndexError) as e:
+        print(e)
         return None
        
 
@@ -80,6 +82,9 @@ for synth_wav in Path(args.synth_dataset).rglob("*.wav"):
 # for wav in tqdm(all_wavs):
 #     result = compute_measure(wav)
 #     # print(result)
+
+random.shuffle(all_wavs)
+all_wavs = all_wavs[:len(all_wavs)//10]
 
 results = process_map(compute_measure, all_wavs, chunksize=1, max_workers=2)
 
